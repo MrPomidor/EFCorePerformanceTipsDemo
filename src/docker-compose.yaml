@@ -1,0 +1,10 @@
+name: ef-core-performance
+services:
+  mssql_adventureworks:
+    image: chriseaton/adventureworks
+    ports:
+    - "1433:1433"
+    environment:
+    - "ACCEPT_EULA=Y"
+    - "SA_PASSWORD=Hello_world_777"
+    - "MSSQL_PID=Developer"
