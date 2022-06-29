@@ -1,7 +1,6 @@
 # To bypass execution policy restrictions use next command:
 # Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
-
 . dotnet tool install --global dotnet-ef
 
 . dotnet ef dbcontext scaffold `

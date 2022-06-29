@@ -13,8 +13,8 @@ namespace EFCoreDemo.Controllers
             _productsRepository = productsRepository;
         }
 
-        [HttpGet("{productId:long}")]
-        public async Task<IActionResult> GetProduct(long productId, CancellationToken cancellationToken = default)
+        [HttpGet("{productId:int}")]
+        public async Task<IActionResult> GetProduct(int productId, CancellationToken cancellationToken = default)
         {
             var product = await _productsRepository.GetProduct(productId, cancellationToken);
             if (product == null)
@@ -22,8 +22,8 @@ namespace EFCoreDemo.Controllers
             return Ok(product);
         }
 
-        [HttpGet("{productId:long}/full")]
-        public async Task<IActionResult> GetProductFull(long productId, CancellationToken cancellationToken = default)
+        [HttpGet("{productId:int}/full")]
+        public async Task<IActionResult> GetProductFull(int productId, CancellationToken cancellationToken = default)
         {
             var product = await _productsRepository.GetProductFull(productId, cancellationToken);
             if (product == null)
@@ -31,8 +31,8 @@ namespace EFCoreDemo.Controllers
             return Ok(product);
         }
 
-        [HttpPost("{productId:long}")]
-        public async Task<IActionResult> EditProductName(long productId, [FromBody]string productName)
+        [HttpPost("{productId:int}")]
+        public async Task<IActionResult> EditProductName(int productId, [FromBody]string productName)
         {
             try
             {
