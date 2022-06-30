@@ -9,7 +9,7 @@ namespace Reusables.DI
 {
     public static class ServiceCollectionExtensions
     {
-        public static void AddEfCore(this IServiceCollection services, ConfigurationManager config)
+        public static void AddEfCore(this IServiceCollection services, IConfiguration config)
         {
             services.AddDbContext<AdventureWorksContext>((dbContextConfig) =>
             {

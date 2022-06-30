@@ -8,9 +8,9 @@ namespace Reusables.Storage.Models
 {
     public partial class AdventureWorksContext : DbContext
     {
-        public AdventureWorksContext()
-        {
-        }
+        //public AdventureWorksContext()
+        //{
+        //}
 
         public AdventureWorksContext(DbContextOptions<AdventureWorksContext> options)
             : base(options)

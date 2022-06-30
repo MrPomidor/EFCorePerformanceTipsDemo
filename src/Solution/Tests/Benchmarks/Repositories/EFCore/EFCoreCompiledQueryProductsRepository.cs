@@ -1,25 +1,52 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Reusables.Exceptions;
+using Reusables.Repositories;
 using Reusables.Storage;
 using Reusables.Storage.Models;
 
-namespace Reusables.Repositories.EFCore
+namespace Benchmarks.Repositories.EFCore
 {
-    public class EFCoreProductsRepository : IProductsRepository
+    public class EFCoreCompiledQueryProductsRepository : IProductsRepository
     {
         private readonly AdventureWorksContext _context;
-        public EFCoreProductsRepository(AdventureWorksContext context)
+        public EFCoreCompiledQueryProductsRepository(AdventureWorksContext context)
         {
             _context = context;
         }
 
+        private static Func<AdventureWorksContext, int, CancellationToken, Task<Product>> _getProductByIdQuery =
+            EF.CompileAsyncQuery<AdventureWorksContext, int, Product>((ctx, productId, ct) =>
+                ctx.Products.AsQueryable().FirstOrDefault(x => x.ProductId == productId));
+
+        private static Func<AdventureWorksContext, int, CancellationToken, Task<Product>> _getProductByIdFullQuery =
+            EF.CompileAsyncQuery<AdventureWorksContext, int, Product>((ctx, productId, ct) =>
+                ctx.Products.AsQueryable()
+                    .Include(x => x.ProductModel)
+                    .Include(x => x.ProductSubcategory).ThenInclude(x => x.ProductCategory)
+                    .FirstOrDefault(x => x.ProductId == productId));
+
+        private static Func<AdventureWorksContext, int, int, IAsyncEnumerable<Product>> _getProductsPageQuery =
+            EF.CompileAsyncQuery<AdventureWorksContext, int, int, Product>((ctx, page, pageSize) =>
+                ctx.Products.AsQueryable()
+                    .OrderBy(x => x.ProductId)
+                    .Skip((page - 1) * pageSize).Take(pageSize));
+
+        private static Func<AdventureWorksContext, int, int, IAsyncEnumerable<Product>> _getProductsPageFullQuery =
+            EF.CompileAsyncQuery<AdventureWorksContext, int, int, Product>((ctx, page, pageSize) =>
+                ctx.Products.AsQueryable()
+                    .Include(x => x.ProductModel)
+                    .Include(x => x.ProductSubcategory).ThenInclude(x => x.ProductCategory)
+                    .OrderBy(x => x.ProductId)
+                    .Skip((page - 1) * pageSize).Take(pageSize));
+
         public async Task EditProductName(int productId, string productName)
         {
-            var product = await _context.Products.AsQueryable().FirstOrDefaultAsync(x => x.ProductId == productId);
+            var product = await _getProductByIdQuery.Invoke(_context, productId, CancellationToken.None);
             if (product == null)
                 throw new ProductNotFoundException();
 
@@ -29,15 +56,12 @@ namespace Reusables.Repositories.EFCore
 
         public async Task<Product> GetProduct(int productId, CancellationToken cancellationToken = default)
         {
-            return await _context.Products.AsQueryable().FirstOrDefaultAsync(x => x.ProductId == productId, cancellationToken);
+            return await _getProductByIdQuery.Invoke(_context, productId, cancellationToken);
         }
 
         public async Task<Product> GetProductFull(int productId, CancellationToken cancellationToken = default)
         {
-            var product = await _context.Products.AsQueryable()
-                .Include(x => x.ProductModel)
-                .Include(x => x.ProductSubcategory).ThenInclude(x => x.ProductCategory)
-                .FirstOrDefaultAsync(x => x.ProductId == productId, cancellationToken);
+            var product = await _getProductByIdFullQuery.Invoke(_context, productId, cancellationToken);
 
             SanitizeProduct(product);
 
@@ -46,20 +70,12 @@ namespace Reusables.Repositories.EFCore
 
         public async Task<List<Product>> GetProductsPage(int page, int pageSize, CancellationToken cancellationToken)
         {
-            return await _context.Products.AsQueryable()
-                .OrderBy(x => x.ProductId)
-                .Skip((page - 1) * pageSize).Take(pageSize)
-                .ToListAsync(cancellationToken);
+            return await _getProductsPageQuery.Invoke(_context, page, pageSize).ToListAsync(cancellationToken);
         }
 
         public async Task<List<Product>> GetProductsPageFull(int page, int pageSize, CancellationToken cancellationToken)
         {
-            var products = await _context.Products.AsQueryable()
-                .Include(x => x.ProductModel)
-                .Include(x => x.ProductSubcategory).ThenInclude(x => x.ProductCategory)
-                .OrderBy(x => x.ProductId)
-                .Skip((page - 1) * pageSize).Take(pageSize)
-                .ToListAsync(cancellationToken);
+            var products = await _getProductsPageFullQuery.Invoke(_context, page, pageSize).ToListAsync(cancellationToken);
 
             foreach (var product in products)
             {
@@ -69,6 +85,7 @@ namespace Reusables.Repositories.EFCore
             return products;
         }
 
+        // TODO move to distinct repository ?
         public async Task<int> GetTotalProducts(CancellationToken cancellationToken = default)
         {
             return await _context.Products.AsQueryable().CountAsync(cancellationToken);

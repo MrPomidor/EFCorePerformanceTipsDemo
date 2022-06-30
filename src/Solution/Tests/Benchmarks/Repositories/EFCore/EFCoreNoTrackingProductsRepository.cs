@@ -4,21 +4,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Reusables.Exceptions;
+using Reusables.Repositories;
 using Reusables.Storage;
 using Reusables.Storage.Models;
 
-namespace Reusables.Repositories.EFCore
+namespace Benchmarks.Repositories.EFCore
 {
-    public class EFCoreProductsRepository : IProductsRepository
+    public class EFCoreNoTrackingProductsRepository : IProductsRepository
     {
         private readonly AdventureWorksContext _context;
-        public EFCoreProductsRepository(AdventureWorksContext context)
+        public EFCoreNoTrackingProductsRepository(AdventureWorksContext context)
         {
             _context = context;
         }
 
         public async Task EditProductName(int productId, string productName)
         {
+            // IMPORTANT: we should track entities when we need to update/delete
             var product = await _context.Products.AsQueryable().FirstOrDefaultAsync(x => x.ProductId == productId);
             if (product == null)
                 throw new ProductNotFoundException();
@@ -29,12 +31,12 @@ namespace Reusables.Repositories.EFCore
 
         public async Task<Product> GetProduct(int productId, CancellationToken cancellationToken = default)
         {
-            return await _context.Products.AsQueryable().FirstOrDefaultAsync(x => x.ProductId == productId, cancellationToken);
+            return await _context.Products.AsQueryable().AsNoTracking().FirstOrDefaultAsync(x => x.ProductId == productId, cancellationToken);
         }
 
         public async Task<Product> GetProductFull(int productId, CancellationToken cancellationToken = default)
         {
-            var product = await _context.Products.AsQueryable()
+            var product = await _context.Products.AsQueryable().AsNoTracking()
                 .Include(x => x.ProductModel)
                 .Include(x => x.ProductSubcategory).ThenInclude(x => x.ProductCategory)
                 .FirstOrDefaultAsync(x => x.ProductId == productId, cancellationToken);
@@ -46,7 +48,7 @@ namespace Reusables.Repositories.EFCore
 
         public async Task<List<Product>> GetProductsPage(int page, int pageSize, CancellationToken cancellationToken)
         {
-            return await _context.Products.AsQueryable()
+            return await _context.Products.AsQueryable().AsNoTracking()
                 .OrderBy(x => x.ProductId)
                 .Skip((page - 1) * pageSize).Take(pageSize)
                 .ToListAsync(cancellationToken);
@@ -54,7 +56,7 @@ namespace Reusables.Repositories.EFCore
 
         public async Task<List<Product>> GetProductsPageFull(int page, int pageSize, CancellationToken cancellationToken)
         {
-            var products = await _context.Products.AsQueryable()
+            var products = await _context.Products.AsQueryable().AsNoTracking()
                 .Include(x => x.ProductModel)
                 .Include(x => x.ProductSubcategory).ThenInclude(x => x.ProductCategory)
                 .OrderBy(x => x.ProductId)

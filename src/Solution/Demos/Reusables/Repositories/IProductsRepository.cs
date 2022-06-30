@@ -11,7 +11,7 @@ namespace Reusables.Repositories
         Task<Product> GetProductFull(int productId, CancellationToken cancellationToken = default);
         Task<List<Product>> GetProductsPage(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default);
         Task<List<Product>> GetProductsPageFull(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default);
-        Task<long> GetTotalProducts(CancellationToken cancellationToken = default);
+        Task<int> GetTotalProducts(CancellationToken cancellationToken = default);
         Task EditProductName(int productId, string productName);
     }
 }
