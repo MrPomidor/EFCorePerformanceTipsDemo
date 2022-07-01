@@ -5,16 +5,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Reusables.Exceptions;
-using Reusables.Repositories;
 using Reusables.Storage;
 using Reusables.Storage.Models;
 
-namespace Benchmarks.Repositories.EFCore
+namespace Reusables.Repositories.EFCore
 {
-    public class EFCoreCombineImprovementsProductsRepository : IProductsRepository
+    public class EFCoreImprovedProductsRepository : IProductsRepository
     {
         private readonly AdventureWorksContext _context;
-        public EFCoreCombineImprovementsProductsRepository(AdventureWorksContext context)
+        public EFCoreImprovedProductsRepository(AdventureWorksContext context)
         {
             _context = context;
         }

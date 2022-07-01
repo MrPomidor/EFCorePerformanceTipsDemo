@@ -47,6 +47,12 @@ namespace Benchmarks
         }
 
         [Benchmark]
+        public async Task Edit_DisableConcurrencyCheck()
+        {
+            await Do_Edit(EfCoreNoConcurrencyCheckServiceProvider);
+        }
+
+        [Benchmark]
         public async Task Edit_CombinedImprovements()
         {
             await Do_Edit(EfCoreCombineImprovementsServiceProvider);

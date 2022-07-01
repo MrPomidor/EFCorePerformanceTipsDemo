@@ -9,7 +9,7 @@ namespace Benchmarks
     [MemoryDiagnoser]
     public class GetPageFullBenchmark : BenchmarkBase
     {
-        [Params(200)]
+        [Params(100)]
         public int IterationsCount;
 
         [GlobalSetup]
@@ -40,6 +40,12 @@ namespace Benchmarks
         public async Task GetPageFull_CompiledQuery()
         {
             await Do_GetPageFull(EfCoreCompiledQueryServiceProvider);
+        }
+
+        [Benchmark]
+        public async Task GetPageFull_DisableConcurrencyCheck()
+        {
+            await Do_GetPageFull(EfCoreNoConcurrencyCheckServiceProvider);
         }
 
         [Benchmark]

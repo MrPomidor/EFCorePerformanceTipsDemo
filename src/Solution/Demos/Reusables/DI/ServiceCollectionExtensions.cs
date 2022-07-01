@@ -18,5 +18,20 @@ namespace Reusables.DI
 
             services.AddScoped<IProductsRepository, EFCoreProductsRepository>();
         }
+
+        public static void AddEfCoreImproved(this IServiceCollection services, IConfiguration config)
+        {
+            const int PoolSize = 3000;
+
+            services.AddDbContextPool<AdventureWorksContext>(
+                dbContextConfig =>
+                {
+                    dbContextConfig.UseSqlServer(config.GetConnectionString("AdventureWorks"));
+                    dbContextConfig.EnableThreadSafetyChecks(enableChecks: false);
+                },
+                poolSize: PoolSize);
+
+            services.AddScoped<IProductsRepository, EFCoreImprovedProductsRepository>();
+        }
     }
 }

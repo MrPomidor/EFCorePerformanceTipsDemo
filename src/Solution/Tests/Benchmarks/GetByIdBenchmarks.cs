@@ -43,6 +43,12 @@ namespace Benchmarks
         }
 
         [Benchmark]
+        public async Task GetById_DisableConcurrencyCheck()
+        {
+            await Do_GetById(EfCoreNoConcurrencyCheckServiceProvider);
+        }
+
+        [Benchmark]
         public async Task GetById_CombinedImprovements()
         {
             await Do_GetById(EfCoreCombineImprovementsServiceProvider);

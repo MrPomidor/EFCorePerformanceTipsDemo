@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Reusables.Exceptions;
 using Reusables.Repositories;
 
-namespace EFCoreDemo.Controllers
+namespace EFCoreImprovedDemo.Controllers
 {
     // TODO move to common
     [Route("api/products")]
@@ -35,13 +35,13 @@ namespace EFCoreDemo.Controllers
         }
 
         [HttpPost("{productId:int}")]
-        public async Task<IActionResult> EditProductName(int productId, [FromBody]string productName)
+        public async Task<IActionResult> EditProductName(int productId, [FromBody] string productName)
         {
             try
             {
                 await _productsRepository.EditProductName(productId, productName);
             }
-            catch(ProductNotFoundException)
+            catch (ProductNotFoundException)
             {
                 return NotFound();
             }
@@ -50,7 +50,7 @@ namespace EFCoreDemo.Controllers
 
 
         [HttpGet("list")]
-        public async Task<IActionResult> GetPage([FromQuery]int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetPage([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
         {
             var productsPage = await _productsRepository.GetProductsPage(page: page, pageSize: pageSize, cancellationToken);
             return Ok(productsPage);

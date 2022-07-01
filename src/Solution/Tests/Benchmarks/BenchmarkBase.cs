@@ -22,6 +22,7 @@ namespace Benchmarks
         protected ServiceProvider EfCoreNoTrackingServiceProvider;
         protected ServiceProvider EfCoreContextPoolingServiceProvider;
         protected ServiceProvider EfCoreCompiledQueryServiceProvider;
+        protected ServiceProvider EfCoreNoConcurrencyCheckServiceProvider;
         protected ServiceProvider EfCoreCombineImprovementsServiceProvider;
 
         protected int[] Pages;
@@ -34,6 +35,7 @@ namespace Benchmarks
             BuildNoTrackingServiceProvider();
             BuildContextPoolingServiceProvider();
             BuildCompiledQueryServiceProvider();
+            BuildNoConcurrencyCheckServiceProvider();
             BuildCombinedImprovementsServiceProvider();
 
             await SetupProductIds();
@@ -55,7 +57,12 @@ namespace Benchmarks
             EfCoreCompiledQueryServiceProvider = BuildServiceProvider<EFCoreCompiledQueryProductsRepository>();
         }
 
-        private ServiceProvider BuildServiceProvider<TProductsRepositoryImpl>()
+        private void BuildNoConcurrencyCheckServiceProvider()
+        {
+            EfCoreNoConcurrencyCheckServiceProvider = BuildServiceProvider<EFCoreProductsRepository>(disableConcurrencyCheck: true);
+        }
+
+        private ServiceProvider BuildServiceProvider<TProductsRepositoryImpl>(bool disableConcurrencyCheck = false)
             where TProductsRepositoryImpl : class, IProductsRepository
         {
             var config = GetConfiguration();
@@ -64,6 +71,8 @@ namespace Benchmarks
             serviceCollection.AddDbContext<AdventureWorksContext>((dbContextConfig) =>
             {
                 dbContextConfig.UseSqlServer(config.GetConnectionString(ConnectionStringName));
+                if (disableConcurrencyCheck)
+                    dbContextConfig.EnableThreadSafetyChecks(enableChecks: false);
             });
             serviceCollection.AddScoped<IProductsRepository, TProductsRepositoryImpl>();
 
@@ -77,10 +86,10 @@ namespace Benchmarks
 
         private void BuildCombinedImprovementsServiceProvider()
         {
-            EfCoreCombineImprovementsServiceProvider = BuildPoolingServiceProvider<EFCoreCombineImprovementsProductsRepository>();
+            EfCoreCombineImprovementsServiceProvider = BuildPoolingServiceProvider<EFCoreImprovedProductsRepository>(disableConcurrencyCheck: true);
         }
 
-        private ServiceProvider BuildPoolingServiceProvider<TProductsRepositoryImpl>()
+        private ServiceProvider BuildPoolingServiceProvider<TProductsRepositoryImpl>(bool disableConcurrencyCheck = false)
             where TProductsRepositoryImpl : class, IProductsRepository
         {
             const int defaultPoolSize = 1024;
@@ -89,7 +98,12 @@ namespace Benchmarks
 
             var serviceCollection = new ServiceCollection();
             serviceCollection.AddDbContextPool<AdventureWorksContext>(
-                dbContextConfig => dbContextConfig.UseSqlServer(config.GetConnectionString(ConnectionStringName)),
+                dbContextConfig => 
+                { 
+                    dbContextConfig.UseSqlServer(config.GetConnectionString(ConnectionStringName));
+                    if (disableConcurrencyCheck)
+                        dbContextConfig.EnableThreadSafetyChecks(enableChecks: false);
+                },
                 poolSize: defaultPoolSize);
             serviceCollection.AddScoped<IProductsRepository, TProductsRepositoryImpl>();
 
@@ -151,6 +165,13 @@ namespace Benchmarks
             {
                 EfCoreCombineImprovementsServiceProvider?.Dispose();
                 EfCoreCombineImprovementsServiceProvider = null;
+            }
+            catch { }
+
+            try
+            {
+                EfCoreNoConcurrencyCheckServiceProvider?.Dispose();
+                EfCoreNoConcurrencyCheckServiceProvider = null;
             }
             catch { }
         }
