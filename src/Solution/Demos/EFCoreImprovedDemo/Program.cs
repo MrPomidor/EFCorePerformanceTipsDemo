@@ -28,6 +28,7 @@ namespace EFCoreImprovedDemo
                     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
                     );
 
+            services.AddCommon();
             services.AddEfCoreImproved(config);
         }
 
