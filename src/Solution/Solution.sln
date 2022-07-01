@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCoreImprovedDemo", "Demos
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reusables", "Demos\Reusables\Reusables.csproj", "{8517255C-478E-4595-A75D-CD7C24590522}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "Tests\IntegrationTests\IntegrationTests.csproj", "{FA20D4DE-6E26-4CF1-946A-CD219E0F9C9A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +51,10 @@ Global
 		{8517255C-478E-4595-A75D-CD7C24590522}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8517255C-478E-4595-A75D-CD7C24590522}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8517255C-478E-4595-A75D-CD7C24590522}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA20D4DE-6E26-4CF1-946A-CD219E0F9C9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA20D4DE-6E26-4CF1-946A-CD219E0F9C9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA20D4DE-6E26-4CF1-946A-CD219E0F9C9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA20D4DE-6E26-4CF1-946A-CD219E0F9C9A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,6 +66,7 @@ Global
 		{0FC318C4-A12A-4AC3-A18A-FDF30FEB6D40} = {83305490-F16F-4867-BF22-D0C0ECF1CE92}
 		{ABD09EB2-838F-4216-ADD3-04B151D8E1ED} = {83305490-F16F-4867-BF22-D0C0ECF1CE92}
 		{8517255C-478E-4595-A75D-CD7C24590522} = {83305490-F16F-4867-BF22-D0C0ECF1CE92}
+		{FA20D4DE-6E26-4CF1-946A-CD219E0F9C9A} = {0DD946DA-FAF9-40D5-BF66-BAC124C95C3A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {46CC56A0-A4D5-458C-A4F6-ABA5C61BFFC8}

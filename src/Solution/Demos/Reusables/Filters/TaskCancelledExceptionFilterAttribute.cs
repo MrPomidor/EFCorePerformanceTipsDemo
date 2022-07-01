@@ -15,7 +15,7 @@ namespace Reusables.Filters
 
         public void OnException(ExceptionContext context)
         {
-            if (!(context.Exception is TaskCanceledException))
+            if (context.Exception is not TaskCanceledException)
             {
                 return;
             }
@@ -27,7 +27,7 @@ namespace Reusables.Filters
 
         public Task OnExceptionAsync(ExceptionContext context)
         {
-            if (!(context.Exception is TaskCanceledException))
+            if (context.Exception is not TaskCanceledException)
             {
                 return Task.CompletedTask;
             }
