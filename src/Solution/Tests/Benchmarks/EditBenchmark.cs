@@ -58,6 +58,12 @@ namespace Benchmarks
             await Do_Edit(EfCoreCombineImprovementsServiceProvider);
         }
 
+        [Benchmark]
+        public async Task Edit_Dapper()
+        {
+            await Do_Edit(DapperDefaultServiceProvider);
+        }
+
         private async Task Do_Edit(IServiceProvider serviceProvider)
         {
             for (int i = 0; i < IterationsCount; i++)

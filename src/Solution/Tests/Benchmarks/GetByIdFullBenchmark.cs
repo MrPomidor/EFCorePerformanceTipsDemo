@@ -54,6 +54,12 @@ namespace Benchmarks
             await Do_GetByIdFull(EfCoreCombineImprovementsServiceProvider);
         }
 
+        [Benchmark]
+        public async Task GetByIdFull_Dapper()
+        {
+            await Do_GetByIdFull(DapperDefaultServiceProvider);
+        }
+
         private async Task Do_GetByIdFull(IServiceProvider serviceProvider)
         {
             for (int i = 0; i < IterationsCount; i++)

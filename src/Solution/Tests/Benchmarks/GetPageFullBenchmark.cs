@@ -54,6 +54,12 @@ namespace Benchmarks
             await Do_GetPageFull(EfCoreCombineImprovementsServiceProvider);
         }
 
+        [Benchmark]
+        public async Task GetPageFull_Dapper()
+        {
+            await Do_GetPageFull(DapperDefaultServiceProvider);
+        }
+
         private async Task Do_GetPageFull(IServiceProvider serviceProvider)
         {
             for (int i = 0; i < IterationsCount; i++)

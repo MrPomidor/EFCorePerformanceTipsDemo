@@ -6,6 +6,7 @@ using Benchmarks.Repositories.EFCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Reusables.DI;
 using Reusables.Repositories;
 using Reusables.Repositories.EFCore;
 using Reusables.Storage.Models;
@@ -24,6 +25,7 @@ namespace Benchmarks
         protected ServiceProvider EfCoreCompiledQueryServiceProvider;
         protected ServiceProvider EfCoreNoConcurrencyCheckServiceProvider;
         protected ServiceProvider EfCoreCombineImprovementsServiceProvider;
+        protected ServiceProvider DapperDefaultServiceProvider;
 
         protected int[] Pages;
         protected int[] ProductIds;
@@ -37,6 +39,7 @@ namespace Benchmarks
             BuildCompiledQueryServiceProvider();
             BuildNoConcurrencyCheckServiceProvider();
             BuildCombinedImprovementsServiceProvider();
+            BuildDapperDefaultServiceProvider();
 
             await SetupProductIds();
             Random = new Random();
@@ -110,6 +113,17 @@ namespace Benchmarks
             return serviceCollection.BuildServiceProvider();
         }
 
+        private void BuildDapperDefaultServiceProvider()
+        {
+            var config = GetConfiguration();
+
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddSingleton<IConfiguration>(config);
+            serviceCollection.AddDapper();
+
+            DapperDefaultServiceProvider = serviceCollection.BuildServiceProvider();
+        }
+
         private IConfigurationRoot GetConfiguration() => new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
                 .Build();
@@ -172,6 +186,13 @@ namespace Benchmarks
             {
                 EfCoreNoConcurrencyCheckServiceProvider?.Dispose();
                 EfCoreNoConcurrencyCheckServiceProvider = null;
+            }
+            catch { }
+
+            try
+            {
+                DapperDefaultServiceProvider?.Dispose();
+                DapperDefaultServiceProvider = null;
             }
             catch { }
         }

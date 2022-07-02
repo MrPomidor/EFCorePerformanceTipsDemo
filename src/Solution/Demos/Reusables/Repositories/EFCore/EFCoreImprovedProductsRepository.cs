@@ -88,7 +88,6 @@ namespace Reusables.Repositories.EFCore
             return products;
         }
 
-        // TODO move to distinct repository ?
         public async Task<int> GetTotalProducts(CancellationToken cancellationToken = default)
         {
             return await _context.Products.AsQueryable().CountAsync(cancellationToken);

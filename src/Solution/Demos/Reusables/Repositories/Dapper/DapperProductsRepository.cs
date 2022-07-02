@@ -40,7 +40,7 @@ namespace Reusables.Repositories.Dapper
         public async Task<Product> GetProduct(int productId, CancellationToken cancellationToken = default)
         {
             using var connection = _connectionFactory.GetConnection();
-            return await connection.QueryFirstOrDefaultAsync<Product>(
+            return await connection.QuerySingleOrDefaultAsync<Product>(
                 new CommandDefinition(GetProductQuery, parameters: new { id = productId }, cancellationToken: cancellationToken));
         }
 
@@ -72,7 +72,8 @@ namespace Reusables.Repositories.Dapper
                         product.ProductSubcategory.ProductCategory = productCategory;
                     return product;
                 },
-                splitOn: "ProductModelID,ProductSubcategoryID,ProductCategoryID")).FirstOrDefault();
+                splitOn: "ProductModelID,ProductSubcategoryID,ProductCategoryID"))
+                .SingleOrDefault();
 
             SanitizeProduct(product);
             return product;
