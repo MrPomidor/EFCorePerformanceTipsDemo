@@ -49,7 +49,16 @@ namespace IntegrationTests
         {
             const int productId = 995;
 
-            await CompareWithEf(async (repo) => await repo.GetProduct(productId));
+            await InServiceProvidersScope(async (efRepository, dapperRepository) =>
+            {
+                var resultFromEf = await efRepository.GetProduct(productId);
+                var resultFromDapper = await dapperRepository.GetProduct(productId);
+
+                Assert.NotNull(resultFromEf);
+                Assert.NotNull(resultFromDapper);
+
+                resultFromDapper.Should().BeEquivalentTo(resultFromEf);
+            });
         }
 
         [Fact]
@@ -57,25 +66,68 @@ namespace IntegrationTests
         {
             const int productId = 995;
 
-            await CompareWithEf(async (repo) => await repo.GetProductFull(productId));
+            await InServiceProvidersScope(async (efRepository, dapperRepository) =>
+            {
+                var resultFromEf = await efRepository.GetProductFull(productId);
+                var resultFromDapper = await dapperRepository.GetProductFull(productId);
+
+                Assert.NotNull(resultFromEf);
+                Assert.NotNull(resultFromDapper);
+
+                resultFromDapper.Should().BeEquivalentTo(resultFromEf);
+            });
         }
 
         [Fact]
         public async Task GetPage_ShouldBeEquivalentToEF()
         {
-            const int pageNumber = 1;
             const int pageSize = 50;
 
-            await CompareWithEf(async (repo) => await repo.GetProductsPage(pageNumber, pageSize));
+            await InServiceProvidersScope(async (efRepository, dapperRepository) =>
+            {
+                var totalCountEf = await efRepository.GetTotalProducts();
+                var totalCountDapper = await dapperRepository.GetTotalProducts();
+
+                Assert.Equal(totalCountEf, totalCountDapper);
+
+                var pages = (totalCountDapper / pageSize) + 1;
+                for (int currentPage =1; currentPage <= pages; currentPage++)
+{
+                    var resultFromEf = await efRepository.GetProductsPage(currentPage, pageSize);
+                    var resultFromDapper = await dapperRepository.GetProductsPage(currentPage, pageSize);
+
+                    Assert.NotNull(resultFromEf);
+                    Assert.NotNull(resultFromDapper);
+
+                    resultFromDapper.Should().BeEquivalentTo(resultFromEf, $"page {currentPage} results should be the same");
+                }
+            });
         }
 
         [Fact]
         public async Task GetPageFull_ShouldBeEquivalentToEF()
         {
-            const int pageNumber = 1;
             const int pageSize = 50;
 
-            await CompareWithEf(async (repo) => await repo.GetProductsPageFull(pageNumber, pageSize));
+            await InServiceProvidersScope(async (efRepository, dapperRepository) =>
+            {
+                var totalCountEf = await efRepository.GetTotalProducts();
+                var totalCountDapper = await dapperRepository.GetTotalProducts();
+
+                Assert.Equal(totalCountEf, totalCountDapper);
+
+                var pages = (totalCountDapper / pageSize) + 1;
+                for (int currentPage = 1; currentPage <= pages; currentPage++)
+                {
+                    var resultFromEf = await efRepository.GetProductsPageFull(currentPage, pageSize);
+                    var resultFromDapper = await dapperRepository.GetProductsPageFull(currentPage, pageSize);
+
+                    Assert.NotNull(resultFromEf);
+                    Assert.NotNull(resultFromDapper);
+
+                    resultFromDapper.Should().BeEquivalentTo(resultFromEf, $"page {currentPage} results should be the same");
+                }
+            });
         }
 
         [Fact]
@@ -85,12 +137,24 @@ namespace IntegrationTests
             var productNameDataset = new Bogus.DataSets.Commerce();
             string newProductName = $"{productNameDataset.ProductName().PadLeft(35, ' ').Substring(0, 35)}-{Guid.NewGuid().ToString().Substring(0, 10)}";
 
-            await CompareWithEf(
-                getResultsToCompare: async (repo) => await repo.GetProduct(productId),
-                doActionWithDapper: async (dapperRepo) => await dapperRepo.EditProductName(productId, newProductName));
+            await InServiceProvidersScope(async (efRepository, dapperRepository) =>
+            {
+                await dapperRepository.EditProductName(productId, newProductName);
+
+                var resultFromEf = await efRepository.GetProductFull(productId);
+                var resultFromDapper = await dapperRepository.GetProductFull(productId);
+
+                Assert.NotNull(resultFromEf);
+                Assert.NotNull(resultFromDapper);
+
+                Assert.True(resultFromEf.Name.Equals(newProductName));
+                Assert.True(resultFromDapper.Name.Equals(newProductName));
+
+                resultFromDapper.Should().BeEquivalentTo(resultFromEf);
+            });
         }
 
-        private async Task CompareWithEf<T>(Func<IProductsRepository, Task<T>> getResultsToCompare, Func<IProductsRepository, Task> doActionWithDapper = null)
+        private async Task InServiceProvidersScope(Func<IProductsRepository, IProductsRepository, Task> doTestAsync)
         {
             using var efServiceProviderScope = EfCoreDefaultServiceProvider.CreateScope();
             using var dapperServiceProviderScope = DapperServiceProvider.CreateScope();
@@ -98,16 +162,7 @@ namespace IntegrationTests
             var efRepository = efServiceProviderScope.ServiceProvider.GetRequiredService<IProductsRepository>();
             var dapperRepository = dapperServiceProviderScope.ServiceProvider.GetRequiredService<IProductsRepository>();
 
-            if (doActionWithDapper != null)
-                await doActionWithDapper(dapperRepository);
-
-            var resultFromEf = await getResultsToCompare(efRepository);
-            var resultFromDapper = await getResultsToCompare(dapperRepository);
-
-            Assert.NotNull(resultFromEf);
-            Assert.NotNull(resultFromDapper);
-
-            resultFromDapper.Should().BeEquivalentTo(resultFromEf);
+            await doTestAsync(efRepository, dapperRepository);
         }
 
         public void Dispose()
