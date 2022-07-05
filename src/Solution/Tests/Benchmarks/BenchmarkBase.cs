@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Benchmarks.Repositories.EFCore;
@@ -24,12 +23,12 @@ namespace Benchmarks
         protected ServiceProvider EfCoreContextPoolingServiceProvider;
         protected ServiceProvider EfCoreCompiledQueryServiceProvider;
         protected ServiceProvider EfCoreNoConcurrencyCheckServiceProvider;
+        protected ServiceProvider EfCoreContextPoolingNoConcurrencyCheckServiceProvider;
         protected ServiceProvider EfCoreCombineImprovementsServiceProvider;
         protected ServiceProvider DapperDefaultServiceProvider;
 
         protected int[] Pages;
         protected int[] ProductIds;
-        protected Random Random;
 
         protected async Task Setup()
         {
@@ -38,11 +37,11 @@ namespace Benchmarks
             BuildContextPoolingServiceProvider();
             BuildCompiledQueryServiceProvider();
             BuildNoConcurrencyCheckServiceProvider();
+            BuildContextPoolingNoConcurrencyCheckServiceProvider();
             BuildCombinedImprovementsServiceProvider();
             BuildDapperDefaultServiceProvider();
 
             await SetupProductIds();
-            Random = new Random();
         }
 
         private void BuildDefaultServiceProvider()
@@ -65,7 +64,7 @@ namespace Benchmarks
             EfCoreNoConcurrencyCheckServiceProvider = BuildServiceProvider<EFCoreProductsRepository>(disableConcurrencyCheck: true);
         }
 
-        private ServiceProvider BuildServiceProvider<TProductsRepositoryImpl>(bool disableConcurrencyCheck = false)
+        protected ServiceProvider BuildServiceProvider<TProductsRepositoryImpl>(bool disableConcurrencyCheck = false)
             where TProductsRepositoryImpl : class, IProductsRepository
         {
             var config = GetConfiguration();
@@ -87,12 +86,17 @@ namespace Benchmarks
             EfCoreContextPoolingServiceProvider = BuildPoolingServiceProvider<EFCoreProductsRepository>();
         }
 
+        private void BuildContextPoolingNoConcurrencyCheckServiceProvider()
+        {
+            EfCoreContextPoolingNoConcurrencyCheckServiceProvider = BuildPoolingServiceProvider<EFCoreProductsRepository>(disableConcurrencyCheck: true);
+        }
+
         private void BuildCombinedImprovementsServiceProvider()
         {
             EfCoreCombineImprovementsServiceProvider = BuildPoolingServiceProvider<EFCoreImprovedProductsRepository>(disableConcurrencyCheck: true);
         }
 
-        private ServiceProvider BuildPoolingServiceProvider<TProductsRepositoryImpl>(bool disableConcurrencyCheck = false)
+        protected ServiceProvider BuildPoolingServiceProvider<TProductsRepositoryImpl>(bool disableConcurrencyCheck = false)
             where TProductsRepositoryImpl : class, IProductsRepository
         {
             const int defaultPoolSize = 1024;
@@ -195,13 +199,19 @@ namespace Benchmarks
                 DapperDefaultServiceProvider = null;
             }
             catch { }
+
+            try
+            {
+                EfCoreContextPoolingNoConcurrencyCheckServiceProvider?.Dispose();
+                EfCoreContextPoolingNoConcurrencyCheckServiceProvider = null;
+            }
+            catch { }
         }
 
         protected void CleanupVariables()
         {
             Pages = null;
             ProductIds = null;
-            Random = null;
         }
     }
 }

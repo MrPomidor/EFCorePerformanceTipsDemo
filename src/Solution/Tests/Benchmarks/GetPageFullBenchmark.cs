@@ -49,6 +49,12 @@ namespace Benchmarks
         }
 
         [Benchmark]
+        public async Task GetPageFull_ContextPoolingDisableConcurrencyCheck()
+        {
+            await Do_GetPageFull(EfCoreContextPoolingNoConcurrencyCheckServiceProvider);
+        }
+
+        [Benchmark]
         public async Task GetPageFull_CombinedImprovements()
         {
             await Do_GetPageFull(EfCoreCombineImprovementsServiceProvider);

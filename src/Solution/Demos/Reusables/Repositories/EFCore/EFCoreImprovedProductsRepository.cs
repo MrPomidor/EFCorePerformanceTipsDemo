@@ -18,10 +18,6 @@ namespace Reusables.Repositories.EFCore
             _context = context;
         }
 
-        private static Func<AdventureWorksContext, int, CancellationToken, Task<Product>> _getProductByIdQuery =
-            EF.CompileAsyncQuery<AdventureWorksContext, int, Product>((ctx, productId, ct) =>
-                ctx.Products.AsQueryable().FirstOrDefault(x => x.ProductId == productId));
-
         private static Func<AdventureWorksContext, int, CancellationToken, Task<Product>> _getProductByIdNoTrackingQuery =
             EF.CompileAsyncQuery<AdventureWorksContext, int, Product>((ctx, productId, ct) =>
                 ctx.Products.AsQueryable().AsNoTracking().FirstOrDefault(x => x.ProductId == productId));
@@ -49,12 +45,19 @@ namespace Reusables.Repositories.EFCore
 
         public async Task EditProductName(int productId, string productName)
         {
-            var product = await _getProductByIdQuery.Invoke(_context, productId, CancellationToken.None);
-            if (product == null)
-                throw new ProductNotFoundException();
+            var product = new Product { ProductId = productId, Name = productName };
 
-            product.Name = productName;
-            await _context.SaveChangesAsync();
+            _context.Products.Attach(product);
+            _context.Entry(product).Property(x => x.Name).IsModified = true;
+
+            try
+            {
+                _ = await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ProductNotFoundException();
+            }
         }
 
         public async Task<Product> GetProduct(int productId, CancellationToken cancellationToken = default)

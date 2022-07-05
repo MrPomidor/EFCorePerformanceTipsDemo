@@ -49,6 +49,12 @@ namespace Benchmarks
         }
 
         [Benchmark]
+        public async Task GetByIdFull_ContextPoolingDisableConcurrencyCheck()
+        {
+            await Do_GetByIdFull(EfCoreContextPoolingNoConcurrencyCheckServiceProvider);
+        }
+
+        [Benchmark]
         public async Task GetByIdFull_CombinedImprovements()
         {
             await Do_GetByIdFull(EfCoreCombineImprovementsServiceProvider);
@@ -67,7 +73,7 @@ namespace Benchmarks
                 using var scope = serviceProvider.CreateScope();
                 var repository = scope.ServiceProvider.GetRequiredService<IProductsRepository>();
 
-                var product = await repository.GetProductFull(ProductIds[Random.Next(0, ProductIds.Length - 1)]);
+                var product = await repository.GetProductFull(ProductIds[i % (ProductIds.Length - 1)]);
             }
         }
 

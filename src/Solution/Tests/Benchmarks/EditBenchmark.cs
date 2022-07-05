@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
+using Benchmarks.Repositories.EFCore;
 using Microsoft.Extensions.DependencyInjection;
 using Reusables.Repositories;
 
@@ -12,12 +13,16 @@ namespace Benchmarks
         [Params(500)]
         public int IterationsCount;
 
+        protected ServiceProvider EfCoreRawSqlUpdatePooledServiceProvider;
+
         private Bogus.DataSets.Commerce _productNameDataset;
 
         [GlobalSetup]
         public async Task GlobalSetup()
         {
             await Setup();
+
+            EfCoreRawSqlUpdatePooledServiceProvider = BuildPoolingServiceProvider<EFCoreRawSqlEditProductsRepository>();
 
             _productNameDataset = new Bogus.DataSets.Commerce();
         }
@@ -53,6 +58,18 @@ namespace Benchmarks
         }
 
         [Benchmark]
+        public async Task Edit_ContextPoolingDisableConcurrencyCheck()
+        {
+            await Do_Edit(EfCoreContextPoolingNoConcurrencyCheckServiceProvider);
+        }
+
+        [Benchmark]
+        public async Task Edit_ContextPoolingRawSqlUpdate()
+        {
+            await Do_Edit(EfCoreRawSqlUpdatePooledServiceProvider);
+        }
+
+        [Benchmark]
         public async Task Edit_CombinedImprovements()
         {
             await Do_Edit(EfCoreCombineImprovementsServiceProvider);
@@ -71,7 +88,7 @@ namespace Benchmarks
                 using var scope = serviceProvider.CreateScope();
                 var repository = scope.ServiceProvider.GetRequiredService<IProductsRepository>();
 
-                await repository.EditProductName(ProductIds[Random.Next(0, ProductIds.Length - 1)], GetNewName());
+                await repository.EditProductName(ProductIds[i % (ProductIds.Length - 1)], GetNewName());
             }
         }
 
@@ -81,6 +98,14 @@ namespace Benchmarks
         public void GlobalCleanup()
         {
             CleanupServiceProviders();
+
+            try
+            {
+                EfCoreContextPoolingNoConcurrencyCheckServiceProvider?.Dispose();
+                EfCoreContextPoolingNoConcurrencyCheckServiceProvider = null;
+            }
+            catch { }
+
             CleanupVariables();
 
             _productNameDataset = null;
