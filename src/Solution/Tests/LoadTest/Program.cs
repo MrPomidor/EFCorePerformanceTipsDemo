@@ -168,7 +168,7 @@ async Task<Scenario> EditProductScenario()
     {
         var postBody = new StringContent("\""+context.FeedItem.newName+"\"", Encoding.UTF8, "application/json");
 
-        var response = await context.Client.PostAsync($"{baseUrl}/{context.FeedItem.productId}", postBody);
+        var response = await context.Client.PutAsync($"{baseUrl}/{context.FeedItem.productId}", postBody);
         if (response.IsSuccessStatusCode)
         {
             var bytes = await response.Content.ReadAsByteArrayAsync();

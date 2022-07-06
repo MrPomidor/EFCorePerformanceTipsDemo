@@ -35,7 +35,7 @@ namespace Reusables.Controllers
             return Ok(product);
         }
 
-        [HttpPost("{productId:int}")]
+        [HttpPut("{productId:int}")]
         public async Task<IActionResult> EditProductName(int productId, [FromBody] string productName)
         {
             try
