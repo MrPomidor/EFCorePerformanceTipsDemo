@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Reusables.DI;
 using Reusables.Repositories;
+using Reusables.Utils;
 using Xunit;
 
 namespace IntegrationTests
@@ -131,11 +132,26 @@ namespace IntegrationTests
         }
 
         [Fact]
+        public async Task CreateProduct_ShouldCreate()
+        {
+            var newProduct = ProductsGenerator.Instance.GenerateProduct();
+
+            await InServiceProvidersScope(async (efRepository, dapperRepository) =>
+            {
+                var productId = await dapperRepository.CreateProduct(newProduct);
+                Assert.True(productId != 0);
+
+                var efProduct = await efRepository.GetProduct(productId);
+                Assert.NotNull(efProduct);
+                Assert.Equal(efProduct.ProductId, productId);
+            });
+        }
+
+        [Fact]
         public async Task EditProduct_ShouldBeEquivalentToEF()
         {
             const int productId = 995;
-            var productNameDataset = new Bogus.DataSets.Commerce();
-            string newProductName = $"{productNameDataset.ProductName().PadLeft(35, ' ').Substring(0, 35)}-{Guid.NewGuid().ToString().Substring(0, 10)}";
+            string newProductName = ProductsGenerator.Instance.GenerateProductName();
 
             await InServiceProvidersScope(async (efRepository, dapperRepository) =>
             {

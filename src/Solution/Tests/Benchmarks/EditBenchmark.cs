@@ -4,6 +4,7 @@ using BenchmarkDotNet.Attributes;
 using Benchmarks.Repositories.EFCore;
 using Microsoft.Extensions.DependencyInjection;
 using Reusables.Repositories;
+using Reusables.Utils;
 
 namespace Benchmarks
 {
@@ -13,18 +14,16 @@ namespace Benchmarks
         [Params(500)]
         public int IterationsCount;
 
-        protected ServiceProvider EfCoreRawSqlUpdatePooledServiceProvider;
-
-        private Bogus.DataSets.Commerce _productNameDataset;
+        protected ServiceProvider EfCoreRawSqlServiceProvider;
+        protected ServiceProvider EfCoreRawSqlPooledServiceProvider;
 
         [GlobalSetup]
         public async Task GlobalSetup()
         {
             await Setup();
 
-            EfCoreRawSqlUpdatePooledServiceProvider = BuildPoolingServiceProvider<EFCoreRawSqlEditProductsRepository>();
-
-            _productNameDataset = new Bogus.DataSets.Commerce();
+            EfCoreRawSqlServiceProvider = BuildServiceProvider<EFCoreRawSqlEditAndCreateProductsRepository>();
+            EfCoreRawSqlPooledServiceProvider = BuildPoolingServiceProvider<EFCoreRawSqlEditAndCreateProductsRepository>();
         }
 
         [Benchmark(Baseline = true)]
@@ -64,15 +63,21 @@ namespace Benchmarks
         }
 
         [Benchmark]
-        public async Task Edit_ContextPoolingRawSqlUpdate()
-        {
-            await Do_Edit(EfCoreRawSqlUpdatePooledServiceProvider);
-        }
-
-        [Benchmark]
         public async Task Edit_CombinedImprovements()
         {
             await Do_Edit(EfCoreCombineImprovementsServiceProvider);
+        }
+
+        [Benchmark]
+        public async Task Edit_RawSql()
+        {
+            await Do_Edit(EfCoreRawSqlServiceProvider);
+        }
+
+        [Benchmark]
+        public async Task Edit_ContextPoolingRawSql()
+        {
+            await Do_Edit(EfCoreRawSqlPooledServiceProvider);
         }
 
         [Benchmark]
@@ -88,11 +93,9 @@ namespace Benchmarks
                 using var scope = serviceProvider.CreateScope();
                 var repository = scope.ServiceProvider.GetRequiredService<IProductsRepository>();
 
-                await repository.EditProductName(ProductIds[i % (ProductIds.Length - 1)], GetNewName());
+                await repository.EditProductName(ProductIds[i % (ProductIds.Length - 1)], ProductsGenerator.Instance.GenerateProductName());
             }
         }
-
-        private string GetNewName() => $"{_productNameDataset.ProductName().PadLeft(35, ' ').Substring(0, 35)}-{Guid.NewGuid().ToString().Substring(0, 10)}";
 
         [GlobalCleanup]
         public void GlobalCleanup()
@@ -101,14 +104,19 @@ namespace Benchmarks
 
             try
             {
-                EfCoreContextPoolingNoConcurrencyCheckServiceProvider?.Dispose();
-                EfCoreContextPoolingNoConcurrencyCheckServiceProvider = null;
+                EfCoreRawSqlServiceProvider?.Dispose();
+                EfCoreRawSqlServiceProvider = null;
+            }
+            catch { }
+
+            try
+            {
+                EfCoreRawSqlPooledServiceProvider?.Dispose();
+                EfCoreRawSqlPooledServiceProvider = null;
             }
             catch { }
 
             CleanupVariables();
-
-            _productNameDataset = null;
         }
     }
 }

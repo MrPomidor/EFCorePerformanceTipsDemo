@@ -10,7 +10,7 @@ namespace Benchmarks
         static void Main(string[] args)
         {
             // uncomment to run specific benchmark
-            //BenchmarkRunner.Run<GetPageFullBenchmark>(GetGlobalConfig());
+            //BenchmarkRunner.Run<CreateBenchmark>(GetGlobalConfig());
 
             // uncomment to run all benchmarks
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly)

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Reusables.Exceptions;
+using Reusables.Models;
 using Reusables.Storage;
 using Reusables.Storage.Models;
 
@@ -42,6 +43,29 @@ namespace Reusables.Repositories.EFCore
                     .Include(x => x.ProductSubcategory).ThenInclude(x => x.ProductCategory)
                     .OrderBy(x => x.ProductId)
                     .Skip((page - 1) * pageSize).Take(pageSize));
+
+        public async Task<int> CreateProduct(AddProductModel newProduct)
+        {
+            // we have nothing to do here for improvement :(
+            var product = new Product
+            {
+                Name = newProduct.Name,
+                ProductNumber = newProduct.ProductNumber,
+                SafetyStockLevel = newProduct.SafetyStockLevel,
+                ReorderPoint = newProduct.ReorderPoint,
+                StandardCost = newProduct.StandartCost,
+                ListPrice = newProduct.ListPrice,
+                Class = newProduct.Class,
+                Style = newProduct.Style,
+                Color = Consts.ApplicationProductsColor,
+                DaysToManufacture = newProduct.DaysToManifacture,
+                SellStartDate = newProduct.SellStartDate,
+            };
+
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+            return product.ProductId;
+        }
 
         public async Task EditProductName(int productId, string productName)
         {

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Reusables.Models;
 using Reusables.Storage;
 
 namespace Reusables.Repositories
@@ -13,5 +14,6 @@ namespace Reusables.Repositories
         Task<List<Product>> GetProductsPageFull(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default);
         Task<int> GetTotalProducts(CancellationToken cancellationToken = default);
         Task EditProductName(int productId, string productName);
+        Task<int> CreateProduct(AddProductModel newProduct);
     }
 }

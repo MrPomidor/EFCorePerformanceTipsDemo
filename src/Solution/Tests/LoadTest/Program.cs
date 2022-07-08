@@ -5,6 +5,7 @@ using NBomber.Contracts;
 using NBomber.CSharp;
 using Newtonsoft.Json;
 using Reusables.Storage;
+using Reusables.Utils;
 
 // SUT configuration
 const int pageSize = 50;
@@ -26,6 +27,8 @@ var getPageScenario = () => GetPagesScenario(isFull: false);
 var getFullPageScenario = () => GetPagesScenario(isFull: true);
 // edit product scenario
 var editProductScenario = () => EditProductScenario();
+// create product scenario
+var createProductScenario = () => CreateProductScenario();
 
 var scenariousToRun = new[]
 {
@@ -34,6 +37,7 @@ var scenariousToRun = new[]
     (nameof(getPageScenario), getPageScenario),
     (nameof(getFullPageScenario), getFullPageScenario),
     (nameof(editProductScenario), editProductScenario),
+    (nameof(createProductScenario), createProductScenario),
 };
 
 foreach (var (scenarioName, scenarioTask) in scenariousToRun)
@@ -154,10 +158,9 @@ async Task<Scenario> EditProductScenario()
     var productIds = await GetProductIds();
 
     // get productIds with fake names feed
-    var productNameDataset = new Bogus.DataSets.Commerce();
     var productIdNewNameFeed = Feed.CreateCircular(
         "pageNumbers",
-        productIds.Select(x => (productId: x, newName: $"{productNameDataset.ProductName().PadLeft(35, ' ').Substring(0, 35)}-{Guid.NewGuid().ToString().Substring(0, 10)}"))
+        productIds.Select(x => (productId: x, newName: ProductsGenerator.Instance.GenerateProductName()))
         );
 
     // get client factory
@@ -166,9 +169,9 @@ async Task<Scenario> EditProductScenario()
     // create step
     var step = Step.Create("editProduct", clientFactory, productIdNewNameFeed, async (context) =>
     {
-        var postBody = new StringContent("\""+context.FeedItem.newName+"\"", Encoding.UTF8, "application/json");
+        var putBody = new StringContent("\""+context.FeedItem.newName+"\"", Encoding.UTF8, "application/json");
 
-        var response = await context.Client.PutAsync($"{baseUrl}/{context.FeedItem.productId}", postBody);
+        var response = await context.Client.PutAsync($"{baseUrl}/{context.FeedItem.productId}", putBody);
         if (response.IsSuccessStatusCode)
         {
             var bytes = await response.Content.ReadAsByteArrayAsync();
@@ -193,6 +196,49 @@ async Task<Scenario> EditProductScenario()
         );
 
     return scenario;
+}
+
+Task<Scenario> CreateProductScenario()
+{
+    // get products to be created
+    var newProductsFeed = Feed.CreateCircular(
+        "products",
+        Enumerable.Range(0, 500_000).Select(i => ProductsGenerator.Instance.GenerateProduct())
+        );
+
+    // get client factory
+    var clientFactory = CreateClientFactory();
+
+    // create step
+    var step = Step.Create("createProduct", clientFactory, newProductsFeed, async (context) =>
+    {
+        var postBody = new StringContent(JsonConvert.SerializeObject(context.FeedItem), Encoding.UTF8, "application/json");
+
+        var response = await context.Client.PostAsync($"{baseUrl}", postBody);
+        if (response.IsSuccessStatusCode)
+        {
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            return Response.Ok(payload: bytes, statusCode: (int)response.StatusCode);
+        }
+        else
+        {
+            if (context.Logger != null)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                context.Logger.Error(responseContent);
+            }
+            return Response.Fail(statusCode: (int)response.StatusCode, error: response.ReasonPhrase);
+        }
+    });
+
+    // create scenario
+    var scenario = ScenarioBuilder.CreateScenario("Create Product", step)
+        .WithWarmUpDuration(warmupTime)
+        .WithLoadSimulations(
+            LoadSimulation.NewKeepConstant(_copies: paralellClients, _during: timeToRun)
+        );
+
+    return Task.FromResult(scenario);
 }
 
 IClientFactory<HttpClient> CreateClientFactory() => ClientFactory.Create(

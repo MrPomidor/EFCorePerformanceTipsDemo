@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Reusables.Exceptions;
+using Reusables.Models;
 using Reusables.Storage;
 
 namespace Reusables.Repositories.Dapper
@@ -14,6 +15,33 @@ namespace Reusables.Repositories.Dapper
         public DapperProductsRepository(IDbConnectionFactory connectionFactory)
         {
             _connectionFactory = connectionFactory;
+        }
+
+        private const string CreateProductQuery = @"INSERT INTO [Production].[Product]
+            (Name, ProductNumber, SafetyStockLevel, ReorderPoint, StandardCost, ListPrice, Class, Style, Color, SellStartDate, DaysToManufacture)
+        VALUES
+            (@Name, @ProductNumber, @SafetyStockLevel, @ReorderPoint, @StandardCost, @ListPrice, @Class, @Style, @Color, @SellStartDate, @DaysToManufacture)
+        SELECT CAST(SCOPE_IDENTITY() as int)";
+        public async Task<int> CreateProduct(AddProductModel newProduct)
+        {
+            var product = new Product
+            {
+                Name = newProduct.Name,
+                ProductNumber = newProduct.ProductNumber,
+                SafetyStockLevel = newProduct.SafetyStockLevel,
+                ReorderPoint = newProduct.ReorderPoint,
+                StandardCost = newProduct.StandartCost,
+                ListPrice = newProduct.ListPrice,
+                Class = newProduct.Class,
+                Style = newProduct.Style,
+                Color = Consts.ApplicationProductsColor,
+                DaysToManufacture = newProduct.DaysToManifacture,
+                SellStartDate = newProduct.SellStartDate,
+            };
+
+            using var connection = _connectionFactory.GetConnection();
+            var productId = await connection.QuerySingleAsync<int>(CreateProductQuery, product);
+            return productId;
         }
 
         private const string EditProductNameQuery = @"UPDATE [Production].[Product]

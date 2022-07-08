@@ -3,19 +3,49 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Reusables;
 using Reusables.Exceptions;
+using Reusables.Models;
 using Reusables.Repositories;
 using Reusables.Storage;
 using Reusables.Storage.Models;
 
 namespace Benchmarks.Repositories.EFCore
 {
-    public class EFCoreRawSqlEditProductsRepository : IProductsRepository
+    public class EFCoreRawSqlEditAndCreateProductsRepository : IProductsRepository
     {
         private readonly AdventureWorksContext _context;
-        public EFCoreRawSqlEditProductsRepository(AdventureWorksContext context)
+        public EFCoreRawSqlEditAndCreateProductsRepository(AdventureWorksContext context)
         {
             _context = context;
+        }
+
+        public async Task<int> CreateProduct(AddProductModel newProduct)
+        {
+            var product = new Product
+            {
+                Name = newProduct.Name,
+                ProductNumber = newProduct.ProductNumber,
+                SafetyStockLevel = newProduct.SafetyStockLevel,
+                ReorderPoint = newProduct.ReorderPoint,
+                StandardCost = newProduct.StandartCost,
+                ListPrice = newProduct.ListPrice,
+                Class = newProduct.Class,
+                Style = newProduct.Style,
+                Color = Consts.ApplicationProductsColor,
+                DaysToManufacture = newProduct.DaysToManifacture,
+                SellStartDate = newProduct.SellStartDate,
+            };
+
+            var productId = await _context.Database.ExecuteSqlRawAsync(@"INSERT INTO [Production].[Product]
+                (Name, ProductNumber, SafetyStockLevel, ReorderPoint, StandardCost, ListPrice, Class, Style, Color, SellStartDate, DaysToManufacture)
+            VALUES
+                ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10})
+            SELECT CAST(SCOPE_IDENTITY() as int)",
+            product.Name, product.ProductNumber, product.SafetyStockLevel, product.ReorderPoint, product.StandardCost, product.ListPrice, 
+            product.Class, product.Style, product.Color, product.SellStartDate, product.DaysToManufacture);
+
+            return productId;
         }
 
         public async Task EditProductName(int productId, string productName)

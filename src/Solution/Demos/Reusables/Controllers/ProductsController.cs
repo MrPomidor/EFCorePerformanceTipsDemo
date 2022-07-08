@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Reusables.Exceptions;
 using Reusables.Filters;
+using Reusables.Models;
 using Reusables.Repositories;
 
 namespace Reusables.Controllers
@@ -49,6 +50,12 @@ namespace Reusables.Controllers
             return Ok();
         }
 
+        [HttpPost("")]
+        public async Task<IActionResult> CreateProduct([FromBody] AddProductModel addModel)
+        {
+            var newProductId = await _productsRepository.CreateProduct(addModel);
+            return Created($"api/products/{newProductId}", newProductId);
+        }
 
         [HttpGet("list")]
         public async Task<IActionResult> GetPage([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
