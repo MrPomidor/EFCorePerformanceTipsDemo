@@ -47,6 +47,7 @@ namespace Reusables.Repositories.EFCore
         public async Task<int> CreateProduct(AddProductModel newProduct)
         {
             // we have nothing to do here for improvement :(
+            // but EF Core 7 reduces round trips here without any code changes! :)
             var product = new Product
             {
                 Name = newProduct.Name,
@@ -69,6 +70,7 @@ namespace Reusables.Repositories.EFCore
 
         public async Task EditProductName(int productId, string productName)
         {
+            // EF Core 7 reduces round trips here without any code changes! :)
             var product = new Product { ProductId = productId, Name = productName };
 
             _context.Products.Attach(product);
